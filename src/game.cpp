@@ -4,16 +4,18 @@ using namespace std;
 using ll = long long;
 using vvi = vector<vector<int>>;
 
+int rows=4, columns=4, players=2, sequence=3;
+
 vvi clear_board(int rows, int columns) {
     return vvi(rows, vector<int>(columns, 0));
 }
 
-void change_turn(int& current) {
-    if (current == 1) {
-        current = 2;
+void change_turn(int& current, int playeramnt) {
+    if (current == playeramnt) {
+        current = 1;
         return;
     }
-    current = 1;
+    current++;
 }
 
 char player_char(int player) {
@@ -44,6 +46,14 @@ void printState(vvi& board) {
     }
 }
 
+void handle_board(vvi & board, int player, int x, int y) {
+    if (board[x][y] == 0) {
+        board[x][y] = player;
+        return;
+    }
+    throw FaultyGameplay("Space already has an owner.");
+}
+
 void handle_input(string line, int & x, int & y) {
     string aux = "";
     int j = 0;
@@ -67,20 +77,54 @@ void handle_input(string line, int & x, int & y) {
     }
 }
 
+bool check_horizontal(vvi board, int seq, int player) {
+    // BUGGY!!!
+    if (board[0].size() < seq) {
+        return false;
+    }
+    bool found = false;
+    int aux = 0;
+    for (int i = 0; i < rows; i++) {
+        int j = 0;
+        while (j < columns - seq + 1) {
+            if (board[i][j] == 0) {
+                j++;
+                continue;
+            }
+            if (found and board[i][j] == player) {
+                aux++;
+            } else if (board[i][j] == player) {
+                aux = 1;
+                found = true;
+            } else {
+                found = false;
+            }
+            j++;
+            if (aux == seq) return true;
+        }
+    }
+    return false;
+}
+
+bool check_victory(vvi board, int seq, int player) {
+    if (check_horizontal(board, seq, player)) {
+        return true;
+    }
+    return false;
+}
+
 /*
 TODO TASKLIST:
-    - change position in board
     - choose between 2 player and vs ai
     - explanation of the coordinates
     - simple random ai
 */
 
 int main() {
-    const int ROWS=4, COLUMNS=4, PLAYERS=2;
     int currentTurn=1;
     vvi board;
 
-    board = clear_board(ROWS, COLUMNS);
+    board = clear_board(rows, columns);
 
     while (true) {
         int x, y;
@@ -89,25 +133,35 @@ int main() {
         cout << "It is the " << player_char(currentTurn) << " player's turn." << "\n";
         printState(board);
         cout << "What will be your move, " << player_char(currentTurn) << "?" << "\n";
-        
 
         try {
             getline(cin, inputLine);
 
             handle_input(inputLine, x, y);
 
-            if (x <= 0 or y <= 0 or x > COLUMNS or y > ROWS) {
+            if (x <= 0 or y <= 0 or x > columns or y > rows) {
                 throw FaultyInput("Invalid coordinates.");
             }
+            x--;
+            y--;
+            
+            handle_board(board, currentTurn, x, y);
         } catch (FaultyInput) {
-            cout << "Please insert a valid coordinate." << "\n";
-            this_thread::sleep_for(chrono::seconds(1));
+            cout << "Please insert a valid input." << "\n";
+            this_thread::sleep_for(chrono::milliseconds(700));
+            continue;
+        } catch (FaultyGameplay) {
+            cout << "That space is already occupied!" << "\n";
+            this_thread::sleep_for(chrono::milliseconds(700));
             continue;
         }
-        x--;
-        y--;
-        
 
+        if (check_victory(board, sequence, currentTurn)) {
+            cout << player_char(currentTurn) << " won!" << "\n";
+            break;
+        }
+
+        change_turn(currentTurn, players);
     }
 
 

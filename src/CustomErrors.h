@@ -15,4 +15,16 @@ class FaultyInput : public std::exception {
         } 
 };
 
+class FaultyGameplay : public std::exception {
+    private: 
+        std::string message; 
+    
+    public:
+        FaultyGameplay(const char* msg) : message(msg) {} 
+        const char* what() const throw() 
+        { 
+            return message.c_str(); 
+        } 
+};
+
 #endif
