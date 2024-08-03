@@ -77,50 +77,75 @@ void handle_input(string line, int & x, int & y) {
     }
 }
 
-bool check_horizontal(vvi board, int seq, int player) {
-    // BUGGY!!!
+bool check_horizontal(vvi & board, int seq, int player) {
     if (board[0].size() < seq) {
         return false;
     }
     bool found = false;
     int aux = 0;
     for (int i = 0; i < rows; i++) {
-        int j = 0;
-        while (j < columns - seq + 1) {
-            if (board[i][j] == 0) {
-                j++;
-                continue;
-            }
-            if (found and board[i][j] == player) {
-                aux++;
-            } else if (board[i][j] == player) {
-                aux = 1;
-                found = true;
+        for (int j = 0; j < columns; j++) {
+            if (board[i][j] == player) {
+                if (found) {
+                    aux++;
+                } else {
+                    aux = 1;
+                    found = true;
+                }
             } else {
                 found = false;
+                continue;
             }
-            j++;
             if (aux == seq) return true;
         }
     }
     return false;
 }
 
-bool check_victory(vvi board, int seq, int player) {
-    if (check_horizontal(board, seq, player)) {
-        return true;
+bool check_vertical(vvi & board, int seq, int player) {
+    if (board.size() < seq) {
+        return false;
     }
+    bool found = false;
+    int aux = 0;
+    for (int j = 0; j < columns; j++) {
+        for (int i = 0; i < rows; i++) {
+            if (board[i][j] == player) {
+                if (found) {
+                    aux++;
+                } else {
+                    aux = 1;
+                    found = true;
+                }
+            } else {
+                found = false;
+                continue;
+            }
+            if (aux == seq) return true;
+        }
+    }
+    return false;
+}
+
+bool check_victory(vvi & board, int seq, int player) {
+    if (check_horizontal(board, seq, player)) return true;
+    if (check_vertical(board, seq, player)) return true;
+    // if (check_diagonal1(board, seq, player)) return true;
+    // if (check_diagonal2(board, seq, player)) return true;
     return false;
 }
 
 /*
 TODO TASKLIST:
+    - add diagonal detection for winning
     - choose between 2 player and vs ai
     - explanation of the coordinates
+    - better ui
     - simple random ai
+        - advanced random ai (chooses first a random spot near its last move, then a random spot)
 */
 
-int main() {
+void run_game_2player() {
     int currentTurn=1;
     vvi board;
 
@@ -157,6 +182,8 @@ int main() {
         }
 
         if (check_victory(board, sequence, currentTurn)) {
+            cout << "\n";
+            printState(board);
             cout << player_char(currentTurn) << " won!" << "\n";
             break;
         }
@@ -164,7 +191,22 @@ int main() {
         change_turn(currentTurn, players);
     }
 
+    return;
+}
 
+int main() {
+    string decision;
+    while (true) {
+        run_game_2player();
+        
+        cout << "\n" << "Want another round? (Y/N)?" << " ";
+        getline(cin, decision);
+        if (decision == "Y" or decision == "y") {
+            continue;
+        } else {
+            break;
+        }
+    }
 
     return 0;
 }
